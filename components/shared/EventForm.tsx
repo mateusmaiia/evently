@@ -17,6 +17,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { eventFormSchema } from "@/lib/validators"
 import { eventDefaultValues } from "@/constants"
+import Dropdown from "./Dropdown"
+import { Textarea } from "../ui/textarea"
+import { FileUploader } from "./FileUploader"
+import { useState } from "react"
+import Image from "next/image"
 
 interface EventFormProps{
   userId: string;
@@ -24,7 +29,7 @@ interface EventFormProps{
 }
 
 const EventForm = ({userId, type}: EventFormProps) => {
-
+  const [files, setFiles] = useState<File[]>([])
   const initialValues = eventDefaultValues
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
@@ -56,8 +61,86 @@ const EventForm = ({userId, type}: EventFormProps) => {
               </FormItem>
             )}
           />  
-      </div>
+        <FormField
+            control={form.control}
+            name="categoryId"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <Dropdown onChangeHandle={field.onChange} value={field.value}/>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />  
+       </div>
+       <div className="flex flex-col gap-5 md:flex-row">
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <FormControl className="h-72">
+                <Textarea placeholder="Description" {...field} className="textarea rounded-2xl"/>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />  
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <FormControl className="h-72">
+                <FileUploader 
+                  onFieldChange={field.onChange}
+                  imageUrl={field.value}
+                  setFiles={setFiles}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />  
+       </div>
         <Button type="submit">Submit</Button>
+
+        <div className="flex flex-col gap-5 md:flex-row">
+          <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormControl>
+                    <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                      <Image alt="calendar" src="/assets/icons/location-grey.svg" height={24} width={24}/>
+                      <Input placeholder="Event location or Online" {...field} className="input-field"/>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />  
+        </div>
+        
+        <div className="flex flex-col gap-5 md:flex-row">
+          <FormField
+              control={form.control}
+              name="startDateTime"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormControl>
+                    <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                      <Image alt="calendar" src="/assets/icons/location-grey.svg" height={24} width={24}/>
+                      <Input placeholder="Event location or Online" {...field} className="input-field"/>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />  
+        </div>
       </form>
     </Form>
   )
