@@ -16,6 +16,7 @@ import {
   GetEventsByUserParams,
   GetRelatedEventsByCategoryParams,
 } from '@/types'
+import mongoose from 'mongoose'
 
 const getCategoryByName = async (name: string) => {
   return Category.findOne({ name: { $regex: name, $options: 'i' } })
@@ -35,7 +36,11 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
     const organizer = await User.findById(userId)
     if (!organizer) throw new Error('Organizer not found')
 
-    const newEvent = await Event.create({ ...event, category: event.categoryId, organizer: userId })
+    if (!mongoose.Types.ObjectId.isValid(event.categoryId)) {
+      throw new Error('Invalid category ID');
+    }
+
+    const newEvent = await Event.create({ ...event, category: new mongoose.Types.ObjectId(event.categoryId), organizer: userId })
     revalidatePath(path)
 
     return JSON.parse(JSON.stringify(newEvent))
@@ -62,26 +67,29 @@ export async function getEventById(eventId: string) {
 // UPDATE
 export async function updateEvent({ userId, event, path }: UpdateEventParams) {
   try {
-    await connectToDatabase()
+    await connectToDatabase();
 
-    const eventToUpdate = await Event.findById(event._id)
-    if (!eventToUpdate || eventToUpdate.organizer.toHexString() !== userId) {
-      throw new Error('Unauthorized or event not found')
+    if (!mongoose.Types.ObjectId.isValid(event._id)) {
+      throw new Error('Invalid event ID');
+    }
+
+    const eventToUpdate = await Event.findById(event._id);
+    if (!eventToUpdate || !eventToUpdate.organizer.equals(new mongoose.Types.ObjectId(userId))) {
+      throw new Error('Unauthorized or event not found');
     }
 
     const updatedEvent = await Event.findByIdAndUpdate(
       event._id,
       { ...event, category: event.categoryId },
       { new: true }
-    )
-    revalidatePath(path)
+    );
+    revalidatePath(path);
 
-    return JSON.parse(JSON.stringify(updatedEvent))
+    return JSON.parse(JSON.stringify(updatedEvent));
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
-
 // DELETE
 export async function deleteEvent({ eventId, path }: DeleteEventParams) {
   try {
